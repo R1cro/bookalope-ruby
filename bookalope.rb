@@ -1,6 +1,7 @@
 require 'net/http'
 require 'uri'
 require 'json'
+require 'base64'
 
 # Helper function that checks if a given string is a Bookalope token or id;
 # returns TRUE if it is, FALSE otherwise.
@@ -49,52 +50,55 @@ class BookalopeClient
   end
 
   def http_get(url, params = {})
-    book_get_uri = URI.parse(@host + url)
-    book_get_request = Net::HTTP::Get.new(book_get_uri)
-    book_get_request.basic_auth('79beff75edcb443b902043cc534476db', '')
-    book_get_request.content_type = 'application/json'
-
-    req_options = {
-      use_ssl: book_get_uri.scheme == 'https',
-    }
-
-    book_get_response = Net::HTTP.start(book_get_uri.hostname, book_get_uri.port, req_options) do |http|
-      http.request(book_get_request)
-    end
-    JSON.parse(book_get_response.body)
-  end
-
-  def http_post(url, params = {})
     if params.any?
       url += '?' + URI.encode_www_form(params)
     end
-    book_create_uri = URI.parse(@host + url)
-    book_create_request = Net::HTTP::Post.new(book_create_uri)
-    book_create_request.basic_auth(@token, '')
-    book_create_request.content_type = 'application/json'
-    book_create_request.body = JSON.dump(params)
+    bookalope_get_uri = URI.parse(@host + url)
+    bookalope_get_request = Net::HTTP::Get.new(bookalope_get_uri)
+    bookalope_get_request.basic_auth('79beff75edcb443b902043cc534476db', '')
+    bookalope_get_request.content_type = 'application/json'
+    bookalope_get_request.body = JSON.dump(params)
+    req_options = {
+      use_ssl: bookalope_get_uri.scheme == 'https',
+    }
+    bookalope_get_response = Net::HTTP.start(bookalope_get_uri.hostname, bookalope_get_uri.port, req_options) do |http|
+      http.request(bookalope_get_request)
+    end
+    if bookalope_get_response['Content-Disposition'].nil?
+      JSON.parse(bookalope_get_response.body)
+    else
+      bookalope_get_response.body
+    end
+  end
+
+  def http_post(url, params = {})
+    bookalope_post_uri = URI.parse(@host + url)
+    bookalope_post_request = Net::HTTP::Post.new(bookalope_post_uri)
+    bookalope_post_request.basic_auth(@token, '')
+    bookalope_post_request.content_type = 'application/json'
+    bookalope_post_request.body = JSON.dump(params)
 
     req_options = {
-      use_ssl: book_create_uri.scheme == 'https',
+      use_ssl: bookalope_post_uri.scheme == 'https',
     }
 
-    book_create_response = Net::HTTP.start(book_create_uri.hostname, book_create_uri.port, req_options) do |http|
-      http.request(book_create_request)
+    bookalope_post_response = Net::HTTP.start(bookalope_post_uri.hostname, bookalope_post_uri.port, req_options) do |http|
+      http.request(bookalope_post_request)
     end
-    JSON.parse(book_create_response.body)
+    JSON.parse(bookalope_post_response.body)
   end
 
   def http_delete(url)
-    uri_delete = URI.parse(@host + url)
-    delete_request = Net::HTTP::Delete.new(uri_delete)
+    bookalope_delete_uri = URI.parse(@host + url)
+    bookalope_delete_request = Net::HTTP::Delete.new(bookalope_delete_uri)
     delete_request.basic_auth(@token, '')
 
     req_options = {
-      use_ssl: uri_delete.scheme == 'https',
+      use_ssl: bookalope_delete_uri.scheme == 'https',
     }
 
-    response_delete = Net::HTTP.start(uri_delete.hostname, uri_delete.port, req_options) do |http|
-      http.request(delete_request)
+    bookalope_delete_response = Net::HTTP.start(bookalope_delete_uri.hostname, bookalope_delete_uri.port, req_options) do |http|
+      http.request(bookalope_delete_request)
     end
   end
 
@@ -106,27 +110,27 @@ class BookalopeClient
   end
 
   def get_export_formats
-    formats = self.http_get('/api/formats').formats # + @host
+    formats = self.http_get('/api/formats')['formats']
     formats_list = Array.new
-    formats.export.each do |format|
+    formats['export'].each do |format|
       formats_list << Format.new(format)
     end
   end
 
   def get_import_formats
-    formats = self.http_get('/api/formats').formats # + @host
+    formats = self.http_get('/api/formats')['formats']
     formats_list = Array.new
-    formats.import.each do |format|
+    formats['import'].each do |format|
       formats_list << Format.new(format)
     end
   end
 
   def get_styles(format)
     params = { format: format }
-    styles = self.http_get('/api/styles', params).styles # + @host
-    styles_list = Array.new
+    styles = self.http_get('/api/styles', params)['styles']
+    styles_list = []
     styles.each do |style|
-      styles_list << Style.new(format, style)
+      return styles_list << Style.new(format, style)
     end
   end
 
@@ -135,7 +139,7 @@ class BookalopeClient
   end
 
   def get_books
-    books = self.http_get('/api/books')['books'] # + @host
+    books = self.http_get('/api/books')['books']
     books_list = Array.new
     books.each do |book|
       books_list << Book.new(self, book)
@@ -192,10 +196,10 @@ class Style
 
   def initialize(format, packed)
     @format = format
-    @short_name = packed.name
-    @name = packed.info.name
-    @description = packed.info.description
-    @api_price = packed.into[:description]
+    @short_name = packed['name']
+    @name = packed['info']['name']
+    @description = packed['info']['description']
+    @api_price = packed['info']['price-api']
   end
 end
 
@@ -204,8 +208,8 @@ class Format
   attr_accessor :file_exts
 
   def initialize(packed)
-    @mime = packed.mime
-    @file_exts = packed.exts
+    @mime = packed['mime']
+    @file_exts = packed['file_exts']
   end
 end
 
@@ -352,7 +356,7 @@ class Bookflow
     params = {
       name: name,
       filename: filename,
-      filebytes: filebytes
+      file: Base64.encode64(filebytes)
     }
     @bookalope.http_post(@url + '/files/image', params)
   end
@@ -371,6 +375,7 @@ class Bookflow
   end
 
   def convert(format, style, version = 'test')
+
     params = {
       format: format,
       styling: style.short_name,
