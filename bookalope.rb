@@ -91,7 +91,7 @@ class BookalopeClient
   def http_delete(url)
     bookalope_delete_uri = URI.parse(@host + url)
     bookalope_delete_request = Net::HTTP::Delete.new(bookalope_delete_uri)
-    delete_request.basic_auth(@token, '')
+    bookalope_delete_request.basic_auth(@token, '')
 
     req_options = {
       use_ssl: bookalope_delete_uri.scheme == 'https',
@@ -109,10 +109,32 @@ class BookalopeClient
     @token = token
   end
 
+  # Correction method for Bookalope formats.
+  # Formats 'JSX' and 'XML' don't exist in the Bookalope conversion parameters.
+  # This formats need to change in 'IDJSX' and 'DOCBOOK' respectively.
+  def correct_exist_export_formats(formats)
+    correct_formats = []
+    formats['export'].each do |format|
+      format['exts'].map! do |item| # jsx and xml -> idjsx and docbook
+        if item =~ /jsx/i
+          'idjsx'
+        elsif item =~ /xml/i
+          'docbook'
+        else
+          item
+        end
+      end
+    end
+    formats['export'].each do |i|
+      correct_formats << i
+    end
+  end
+
   def get_export_formats
     formats = self.http_get('/api/formats')['formats']
+    correct_formats = correct_exist_export_formats(formats)
     formats_list = Array.new
-    formats['export'].each do |format|
+    correct_formats.each do |format|
       formats_list << Format.new(format)
     end
   end

@@ -1,7 +1,7 @@
 require_relative 'bookalope'
 
-
-directory = 'covnert'
+# Create directory for converted documents
+directory = 'convert'
 Dir.mkdir(directory) unless File.exists?(directory)
 
 post_title = 'Great New Book'
@@ -27,11 +27,17 @@ begin
   puts b_client.get_book('ca3e5bc6d1dd4695b706fd064d4f482d')
   puts b_client.get_bookflows('ca3e5bc6d1dd4695b706fd064d4f482d')
 
-  book = b_client.create_book
-  bookflow = book.bookflows[0]
+  ##################################################################
 
+  book = b_client.create_book
+  puts  'Create book. ID: ', book.id
+  bookflow = book.bookflows[0]
+  puts 'Use bookflow. ID: ', bookflow.id
+
+  puts 'Set book name: ' + post_title
   book.name = post_title
 
+  # Set params to current bookflow
   bookflow.name = bookflow_name
   bookflow.title = post_title
   bookflow.author = post_author
@@ -39,17 +45,24 @@ begin
   bookflow.copyright = bookflow_copyright
   bookflow.publisher = bookflow_publisher
 
+  # Upload data to the server
+  puts 'Save book and bookflow.'
   book.save
   bookflow.save
 
-  p bookflow.metadata
+  # Get bookflow's metadata from the server
+  puts  'Bookflow metadata:', bookflow.metadata
 
   # Set document and cover-image and upload
+  puts  'Set document and cover-image.'
   document = open 'XXX.doc', &:read
   cover_image = open 'XXX.png', &:read
 
+  puts  'Upload document and image to the server.'
   bookflow.set_document('MyDoc.doc', document)
+  puts  'Document uploaded.'
   bookflow.set_cover_image('MyImage.png', cover_image)
+  puts  'Image uploaded.'
 
   # Get a list of all supported export file name extensions.
   # Bookalope accepts them as arguments to specify the target file format for conversion.
@@ -60,8 +73,9 @@ begin
     end
   end
 
+  # Set format convertation and dowload converted document from the server
   format_names.each do |format|
-    p 'Converting and downloading ' + format + '...'
+    puts 'Converting and downloading ' + format + '...'
 
     styles = b_client.get_styles(format)
 
@@ -70,16 +84,14 @@ begin
       File.open("#{directory}/bookflow-#{bookflow.id}.#{format}", 'wb') {|out| out.write(converted_bytes) }
     end
 
-    # TODO
-    # URL: /api/styles?format=jsx
-    # /data/Projects/Ruby/bookalope-ruby/bookalope.rb:133
-    # in `get_styles': undefined method `each' for nil:NilClass (NoMethodError)
-
   end
+
+  puts 'Done.'
 
   # Remove book and bookflow
   book.delete
+  puts  'Book removed.'
 
 rescue BookalopeException => error
-  p error.message
+  puts error.message
 end
