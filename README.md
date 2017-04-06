@@ -1,4 +1,4 @@
-### Ruby Wrapper for Bookalope REST API
+## Ruby Wrapper for Bookalope REST API
 
 **BookalopeClient:** The BookalopeClient class is the main interface to Bookalope, and handles authentication and direct access to the API server. All other classes require a BookalopeClient instance to operate. Other than for testing purposes, a user should never have to use a BookalopeClient instance's methods directly.
 
@@ -13,3 +13,30 @@
 **Bookflow:** The Bookflow class represents a single conversion of a book's manuscript. Because a book may run through several manuscript edits, a Book class contains a number of Bookflows. A Bookflow contains author, title, ISBN, copyright, and other metadata information for the book. It also offers all functions required to step through the conversion of the book.
 
 Bookalope's object model is *lazy* in a sense that the user may change the properties of an instance at any time without affecting the server data. To push local modifications to the Bookalope server, call an object's `save` method; to update a local object with server-side data, call an object's `update` method.
+
+### Ruby
+
+* `version` -> 2.4.0
+
+### RDoc
+
+A typical use might be to generate documentation for a package of Ruby source (such as RDoc itself).
+
+  ```bash
+  rdoc
+  ```
+
+### Scripts
+
+* `bookalope.rb` - object-oriented wrapper in Ruby.
+* `convert.rb` - the example script illustrate the use of the Bookalope API.
+
+### Gems (require)
+
+  ```bash
+  require 'net/http'
+  require 'uri'
+  require 'json'
+  require 'base64'
+  require 'rdoc/rdoc'
+  ```
