@@ -8,7 +8,7 @@ bookflow_copyright = 'Bookalope'
 bookflow_publisher = 'Bookalope Client'
 
 begin
-  b_token = '79beff75edcb443b902043cc534476db'
+  b_token = 'TOKEN'
   b_client = BookalopeClient.new
   b_client.set_token(b_token)
 
@@ -33,7 +33,7 @@ begin
   puts 'Set book name: ' + post_title
   book.name = post_title
 
-  # Set params to current bookflow
+  # Set params to current bookflow.
   bookflow.name = bookflow_name
   bookflow.title = post_title
   bookflow.author = post_author
@@ -41,15 +41,15 @@ begin
   bookflow.copyright = bookflow_copyright
   bookflow.publisher = bookflow_publisher
 
-  # Upload data to the server
+  # Upload data to the server.
   puts 'Save book and bookflow.'
   book.save
   bookflow.save
 
-  # Get bookflow's metadata from the server
+  # Get bookflow's metadata from the server.
   puts 'Bookflow metadata:', bookflow.metadata
 
-  # Set document and cover-image and upload
+  # Set document and cover-image and upload.
   puts 'Set document and cover-image.'
   document = open 'XXX.doc', &:read
   cover_image = open 'XXX.png', &:read
@@ -69,11 +69,11 @@ begin
     end
   end
 
-  # Create directory for converted documents
+  # Create directory for converted documents.
   convert_directory = 'convert'
   Dir.mkdir(convert_directory) unless File.exists?(convert_directory)
 
-  # Set format convertation and dowload converted document from the server
+  # Set format convertation and dowload converted document from the server.
   format_names.each do |format|
     puts 'Converting and downloading ' + format + '...'
 
@@ -86,7 +86,7 @@ begin
   end
 
   # Get document and cover-image from the Bookalope server.
-  # Create directory for this documents
+  # Create directory for this documents.
   origin_doc_directory = 'origin'
   Dir.mkdir(origin_doc_directory) unless File.exists?(origin_doc_directory)
 
