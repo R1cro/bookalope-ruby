@@ -162,9 +162,7 @@ class BookalopeClient
           item
         end
       end
-    end
-    formats['export'].each do |i|
-      correct_formats << i
+      correct_formats << format
     end
   end
 

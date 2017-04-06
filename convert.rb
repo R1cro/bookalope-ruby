@@ -8,7 +8,7 @@ bookflow_copyright = 'Bookalope'
 bookflow_publisher = 'Bookalope Client'
 
 begin
-  b_token = 'TOKEN'
+  b_token = 'API TOKEN'
   b_client = BookalopeClient.new
   b_client.set_token(b_token)
 
@@ -104,7 +104,7 @@ begin
 
   puts 'Done.'
 
-  # Remove book and bookflow (optional)
+  # Remove book and bookflow.
   book.delete
   puts 'Book removed.'
 
